@@ -175,8 +175,34 @@ func AtualizarUsuarios(w http.ResponseWriter,r *http.Request){
 	}
 	
 	w.WriteHeader(http.StatusNoContent)
-	if erro := json.NewEncoder(w).Encode(usuario); erro != nil {
-		w.Write([]byte("Erro ao converter o usuário para JSON!"))
+}
+
+func DeletarUsuario(w http.ResponseWriter,r *http.Request){
+	parametros := mux.Vars(r)
+
+	ID, erro := strconv.ParseInt(parametros["id"],10,32)
+	if erro != nil{
+		w.Write([]byte("Erro ao converter o parametro para inteiro"))
+	}
+
+	db, erro := banco.Conectar()
+	if erro != nil{
+		w.Write([]byte("Erro ao conectar no banco de dados!"))
 		return
 	}
+	defer db.Close()
+
+	statement, erro := db.Prepare("delete from usuarios where id = ?")
+	if erro != nil{
+		w.Write([]byte("Erro ao criar statement"))
+		return
+	}
+	defer statement.Close()
+
+	
+	if _ , erro := statement.Exec(ID); erro != nil{
+		w.Write([]byte("Erro ao deletar o usuario"))
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
